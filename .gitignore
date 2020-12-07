@@ -351,3 +351,5 @@ MigrationBackup/
 
 # Custom Ignores
 **/TestApp/*
+
+**/Properties/*

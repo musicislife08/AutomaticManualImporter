@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using AutomaticManualImporter.Models;
 using Microsoft.Extensions.Logging;
@@ -70,16 +68,17 @@ namespace AutomaticManualImporter.Services
             var files = Directory.GetFiles(path);
             var mediaFile = files.Single(x => x.EndsWith(".mkv") || x.EndsWith(".mp4") || x.EndsWith(".m4v"));
             var fi = new FileInfo(mediaFile);
-            var fullRemotePath = $"{remotePath}/{fi.Name}";
+            var fullRemotePath = $"{remotePath}/{fi.Name}.incomplete";
             using var fs = File.OpenRead(mediaFile);
             await Task.Run(() => _client.UploadFile(fs, fullRemotePath));
+            await Task.Run(() => _client.RenameFile(fullRemotePath, $"{remotePath}/{fi.Name}"));
         }
 
         private string GetTempFilePath(string file)
         {
             var split = file.Split("/");
             var filename = split[split.Length - 1];
-            return _settings.TempFileProcessingPath + "\\" + filename;
+            return _settings.TempFileProcessingPath + @"\" + filename;
         }
     }
 }
