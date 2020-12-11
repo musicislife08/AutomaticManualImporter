@@ -15,11 +15,11 @@ namespace AutomaticManualImporter.Models.ApiV3
         public string Timeleft { get; set; }
         public DateTimeOffset EstimatedCompletionTime { get; set; }
         public string Status { get; set; }
-        public TrackedDownloadStatus TrackedDownloadStatus { get; set; }
-        public TrackedDownloadState TrackedDownloadState { get; set; }
+        public string TrackedDownloadStatus { get; set; }
+        public string TrackedDownloadState { get; set; }
         public ICollection<StatusMessage> StatusMessages { get; set; }
         public string DownloadId { get; set; }
-        public DownloadProtocol Protocol { get; set; }
+        public string Protocol { get; set; }
         public string DownloadClient { get; set; }
         public string Indexer { get; set; }
         public string OutputPath { get; set; }

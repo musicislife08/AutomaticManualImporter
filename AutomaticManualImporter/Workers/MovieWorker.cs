@@ -1,20 +1,22 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using AutomaticManualImporter.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace AutomaticManualImporter
 {
-    public class Worker : BackgroundService
+    public class MovieWorker : BackgroundService
     {
-        private readonly ILogger<Worker> _logger;
+        private readonly ILogger<MovieWorker> _logger;
+        private readonly ISonarrService _service;
+        private readonly ISftpService _sftpService;
 
-        public Worker(ILogger<Worker> logger)
+        public MovieWorker(ILogger<MovieWorker> logger, ISonarrService sonarrService)
         {
             _logger = logger;
+            _service = sonarrService;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)

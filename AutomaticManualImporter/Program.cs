@@ -3,6 +3,7 @@ using AutomaticManualImporter.Models;
 using AutomaticManualImporter.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace AutomaticManualImporter
 {
@@ -18,17 +19,26 @@ namespace AutomaticManualImporter
                 .ConfigureServices((hostContext, services) =>
                 {
                     services
-                    .AddLogging()
-                    .AddOptions()
-                    .AddHttpClient();
+                    .AddLogging(config => 
+                    {
+                        config.AddConsole().AddDebug();
+                    })
+                    .AddOptions();
+
+                    services.Configure<Settings>(hostContext.Configuration.GetSection("Settings"));
+                    services.AddTransient<IRarService, RarService>()
+                        .AddTransient<ISftpService, SftpService>()
+                        .AddTransient<ISonarrService, SonarrService>()
+                        .AddTransient<ITvService, TvService>();
 
                     services.AddHttpClient<ISonarrService, SonarrService>(client =>
                     {
-                        client.BaseAddress = new Uri(hostContext.Configuration["SonarrUrl"] + "/api/v3/");
-                        client.DefaultRequestHeaders.Add("X-Api-Key", hostContext.Configuration["SonarrApiKey"]);
+                        client.BaseAddress = new Uri(hostContext.Configuration["Settings:SonarrUrl"] + "/api/v3/");
+                        client.DefaultRequestHeaders.Add("X-Api-Key", hostContext.Configuration["Settings:SonarrApiKey"]);
                     });
 
-                    services.AddHostedService<Worker>();
+                    services.AddHostedService<TvWorker>();
+                    //services.AddHostedService<MovieWorker>();
                 });
     }
 }

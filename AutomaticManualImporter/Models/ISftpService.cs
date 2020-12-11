@@ -5,9 +5,9 @@ namespace AutomaticManualImporter.Models
 {
     public interface ISftpService
     {
-        Task UploadFileAsync(string path, string remotePath);
+        Task UploadMediaFileInPath(string path, string remotePath);
         Task<ICollection<string>> GetRemoteFilesAsync(string path);
-        Task DownloadFileAsync(string path);
-        Task DownloadFilesAsync(ICollection<string> files);
+        Task DownloadFileAsync(string path, string directory);
+        Task DownloadFilesAsync(ICollection<string> files, string directory);
     }
 }

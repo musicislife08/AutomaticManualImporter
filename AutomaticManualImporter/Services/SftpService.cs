@@ -11,26 +11,34 @@ namespace AutomaticManualImporter.Services
 {
     public class SftpService : ISftpService
     {
-        private readonly SftpSettings _settings;
+        private readonly Settings _settings;
         private readonly ILogger<SftpService> _logger;
         private readonly SftpClient _client;
 
-        public SftpService(ILogger<SftpService> logger, IOptions<SftpSettings> options)
+        public SftpService(ILogger<SftpService> logger, IOptions<Settings> options)
         {
             _logger = logger;
             _settings = options.Value;
-            _client = new SftpClient(_settings.Host, _settings.Port, _settings.Username, _settings.Password);
+            _client = new SftpClient(_settings.SftpHost, _settings.SftpPort, _settings.SftpUsername, _settings.SftpPassword);
         }
 
-        public SftpService(SftpSettings settings)
+        public SftpService(Settings settings)
         {
             _settings = settings;
-            _client = new SftpClient(_settings.Host, _settings.Port, _settings.Username, _settings.Password);
+            _client = new SftpClient(_settings.SftpHost, _settings.SftpPort, _settings.SftpUsername, _settings.SftpPassword);
         }
         public async Task<ICollection<string>> GetRemoteFilesAsync(string path)
         {
             if (!_client.IsConnected)
+            {
+                _logger.LogInformation("SftpClient not connected.  Connecting client");
                 await Task.Run(() => _client.Connect());
+            }
+            else
+            {
+                _logger.LogInformation("SftpClient already connected");
+            }
+            _logger.LogDebug($"Grabbing files from {path}");
             var files = await Task.Run(() => _client.ListDirectory(path));
             var list = new List<string>();
             foreach (var file in files)
@@ -41,27 +49,28 @@ namespace AutomaticManualImporter.Services
             return list;
         }
 
-        public async Task DownloadFilesAsync(ICollection<string> files)
+        public async Task DownloadFilesAsync(ICollection<string> files, string directory)
         {
             var tasks = new List<Task>();
             foreach(var file in files)
             {
-                tasks.Add(DownloadFileAsync(file));
+                tasks.Add(DownloadFileAsync(file, directory));
             }
             await Task.WhenAll(tasks);
         }
 
-        public async Task DownloadFileAsync(string path)
+        public async Task DownloadFileAsync(string path, string directory)
         {
-            if (File.Exists(GetTempFilePath(path)))
+            var tempPath = GetTempFilePath(path, directory);
+            if (File.Exists(tempPath))
                 return;
             if (!_client.IsConnected)
                 await Task.Run(() => _client.Connect());
-            using var fs = File.OpenWrite(GetTempFilePath(path));
+            using var fs = File.OpenWrite(tempPath);
             await Task.Run(() => _client.DownloadFile(path, fs));
         }
 
-        public async Task UploadFileAsync(string path, string remotePath)
+        public async Task UploadMediaFileInPath(string path, string remotePath)
         {
             if (!_client.IsConnected)
                 await Task.Run(() => _client.Connect());
@@ -74,11 +83,11 @@ namespace AutomaticManualImporter.Services
             await Task.Run(() => _client.RenameFile(fullRemotePath, $"{remotePath}/{fi.Name}"));
         }
 
-        private string GetTempFilePath(string file)
+        private string GetTempFilePath(string file, string directory)
         {
             var split = file.Split("/");
-            var filename = split[split.Length - 1];
-            return _settings.TempFileProcessingPath + @"\" + filename;
+            var filename = split[^1];
+            return $"{_settings.TempFileProcessingPath}\\{directory}\\{filename}";
         }
     }
 }
